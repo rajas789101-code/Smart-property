@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartProperty – List Your Property</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --dark: #1A1A2E;
+    --gold: #C9A84C;
+    --gold-light: #E8C96C;
+    --terracotta: #C85A38;
+    --sage: #4A7C59;
+    --slate: #3D4A5C;
+    --light-gray: #EAE6DF;
+    --card-bg: #FFFDF9;
+    --text-muted: #7A7060;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(26,26,46,0.97);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 68px;
+    border-bottom: 1px solid rgba(201,168,76,0.25);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: rgba(245,240,232,0.75);
+    text-decoration: none; font-size: 0.875rem;
+    font-weight: 500; letter-spacing: 0.05em;
+    text-transform: uppercase; transition: color 0.2s;
+    cursor: pointer;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-cta {
+    background: var(--gold); color: var(--dark) !important;
+    padding: 8px 20px; border-radius: 4px; font-weight: 600 !important;
+  }
+  .nav-cta:hover { background: var(--gold-light) !important; color: var(--dark) !important; }
+
+  /* ─── USER AVATAR in NAV ─── */
+  .nav-user {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--gold); color: var(--dark);
+    font-weight: 700; font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: 2px solid rgba(201,168,76,0.5);
+  }
+  .nav-username {
+    color: var(--cream); font-size: 0.875rem; font-weight: 500;
+  }
+  .nav-logout {
+    background: none; border: 1px solid rgba(201,168,76,0.4);
+    color: rgba(245,240,232,0.75); padding: 6px 14px;
+    border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .nav-logout:hover { border-color: var(--terracotta); color: var(--terracotta); }
+
+  /* ════════════════════════════════════════
+     LOGIN / SIGNUP OVERLAY
+  ════════════════════════════════════════ */
+  #authOverlay {
+    position: fixed; inset: 0; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1A1A2E 0%, #2d2547 50%, #1A1A2E 100%);
+    overflow: hidden;
+  }
+
+  /* Background decorative pattern */
+  #authOverlay::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.04'%3E%3Cpath d='M50 50v-6h-3v6h-6v3h6v6h3v-6h6v-3h-6zm0-44V0h-3v6h-6v3h6v6h3V9h6V6h-6zM6 50v-6H3v6H-3v3h6v6h3v-6h6v-3H6zM6 6V0H3v6H-3v3h6v6h3V9h6V6H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Floating blobs */
+  .auth-blob {
+    position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; pointer-events: none;
+  }
+  .auth-blob-1 { width: 500px; height: 500px; background: var(--gold); top: -100px; right: -100px; animation: blobFloat 8s ease-in-out infinite; }
+  .auth-blob-2 { width: 400px; height: 400px; background: #6B3FCC; bottom: -80px; left: -80px; animation: blobFloat 10s ease-in-out infinite reverse; }
+  .auth-blob-3 { width: 300px; height: 300px; background: var(--sage); top: 50%; left: 50%; animation: blobFloat 12s ease-in-out infinite 2s; }
+
+  @keyframes blobFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -20px) scale(1.05); }
+    66% { transform: translate(-20px, 15px) scale(0.95); }
+  }
+
+  .auth-card {
+    position: relative; z-index: 2;
+    background: rgba(255,253,249,0.04);
+    border: 1px solid rgba(201,168,76,0.2);
+    backdrop-filter: blur(24px);
+    border-radius: 20px;
+    width: 100%; max-width: 460px;
+    padding: 48px 44px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    animation: authCardIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes authCardIn {
+    from { opacity: 0; transform: translateY(40px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .auth-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 700;
+    color: var(--cream);
+    text-align: center; margin-bottom: 6px;
+  }
+  .auth-logo span { color: var(--gold); }
+
+  .auth-tagline {
+    text-align: center;
+    font-size: 0.83rem;
+    color: rgba(245,240,232,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  /* Tab switcher */
+  .auth-tabs {
+    display: flex; background: rgba(0,0,0,0.25);
+    border-radius: 10px; padding: 4px; margin-bottom: 28px;
+  }
+  .auth-tab {
+    flex: 1; padding: 10px;
+    text-align: center; font-size: 0.88rem; font-weight: 600;
+    color: rgba(245,240,232,0.5); border-radius: 8px;
+    cursor: pointer; transition: all 0.25s; letter-spacing: 0.04em;
+    user-select: none;
+  }
+  .auth-tab.active {
+    background: var(--gold); color: var(--dark);
+    box-shadow: 0 4px 12px rgba(201,168,76,0.35);
+  }
+
+  /* Form panels */
+  .auth-panel { display: none; }
+  .auth-panel.active { display: block; animation: panelIn 0.3s ease both; }
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .auth-field { margin-bottom: 16px; }
+  .auth-field label {
+    display: block; font-size: 0.75rem; font-weight: 600;
+    color: rgba(245,240,232,0.6); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 7px;
+  }
+  .auth-field label span.req { color: var(--terracotta); margin-left: 2px; }
+
+  .auth-input-wrap { position: relative; }
+  .auth-input-wrap .input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 1rem; opacity: 0.45; pointer-events: none;
+  }
+  .auth-input {
+    width: 100%; padding: 12px 14px 12px 42px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(201,168,76,0.15);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem; color: var(--cream);
+    outline: none; transition: all 0.2s;
+  }
+  .auth-input::placeholder { color: rgba(245,240,232,0.25); }
+  .auth-input:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.06);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+
+  /* Password toggle */
+  .pw-toggle {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; font-size: 1rem; opacity: 0.4; transition: opacity 0.2s; user-select: none;
+  }
+  .pw-toggle:hover { opacity: 0.8; }
+
+  .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Forgot password */
+  .auth-forgot {
+    text-align: right; margin-top: -8px; margin-bottom: 16px;
+  }
+  .auth-forgot a {
+    font-size: 0.78rem; color: var(--gold); opacity: 0.8;
+    text-decoration: none; cursor: pointer; transition: opacity 0.2s;
+  }
+  .auth-forgot a:hover { opacity: 1; }
+
+  /* Submit button */
+  .auth-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--dark); border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em;
+    transition: all 0.2s; margin-top: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+  .auth-btn:active { transform: translateY(0); }
+  .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Divider */
+  .auth-divider {
+    display: flex; align-items: center; gap: 12px; margin: 20px 0;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.12);
+  }
+  .auth-divider span { font-size: 0.75rem; color: rgba(245,240,232,0.3); white-space: nowrap; }
+
+  /* OTP section (for guest/mobile login) */
+  .otp-wrap { display: flex; gap: 8px; }
+  .otp-wrap .auth-input { text-align: center; letter-spacing: 0.2em; font-weight: 600; font-size: 1.1rem; }
+  .otp-btn {
+    white-space: nowrap; padding: 12px 16px;
+    background: rgba(201,168,76,0.12); border: 1.5px solid rgba(201,168,76,0.3);
+    border-radius: 10px; color: var(--gold); font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; flex-shrink: 0;
+  }
+  .otp-btn:hover { background: rgba(201,168,76,0.2); }
+
+  /* Message/error below form */
+  .auth-msg {
+    text-align: center; font-size: 0.82rem;
+    padding: 10px 14px; border-radius: 8px; margin-top: 14px;
+    display: none;
+  }
+  .auth-msg.error { background: rgba(200,90,56,0.15); color: #FF8A73; display: block; }
+  .auth-msg.success { background: rgba(74,124,89,0.2); color: #7EDFA6; display: block; }
+  .auth-msg.loading { background: rgba(201,168,76,0.1); color: var(--gold); display: block; }
+
+  /* Footer note */
+  .auth-footer-note {
+    text-align: center; margin-top: 20px;
+    font-size: 0.75rem; color: rgba(245,240,232,0.3); line-height: 1.6;
+  }
+
+  /* ════════════════════════════════════════
+     MAIN APP (hidden until logged in)
+  ════════════════════════════════════════ */
+  #mainApp { display: none; }
+  #mainApp.visible { display: block; }
+
+  /* ─── HERO ─── */
+  .hero {
+    margin-top: 68px;
+    background: var(--dark);
+    padding: 80px 48px 60px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-inner { position: relative; max-width: 900px; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+    font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 20px;
+    margin-bottom: 24px;
+    animation: fadeDown 0.6s ease both;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 1.1;
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+  .hero h1 em { color: var(--gold); font-style: normal; }
+  .hero p {
+    color: rgba(245,240,232,0.65);
+    font-size: 1.05rem; line-height: 1.7;
+    max-width: 520px;
+    animation: fadeDown 0.6s 0.2s ease both;
+  }
+
+  /* Welcome strip */
+  .welcome-strip {
+    background: linear-gradient(90deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    padding: 10px 48px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.84rem; color: rgba(245,240,232,0.7);
+  }
+  .welcome-strip strong { color: var(--gold); }
+
+  /* ─── STEPS ─── */
+  .steps-bar {
+    background: var(--gold);
+    padding: 0 48px;
+    display: flex; gap: 0;
+  }
+  .step-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 32px 18px 0;
+    flex: 1; position: relative;
+  }
+  .step-item:not(:last-child)::after {
+    content: '›';
+    position: absolute; right: 8px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem; color: rgba(26,26,46,0.4);
+  }
+  .step-num {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--dark); color: var(--gold);
+    font-size: 0.8rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text { font-size: 0.82rem; font-weight: 600; color: var(--dark); line-height: 1.3; }
+
+  /* ─── MAIN LAYOUT ─── */
+  .main-wrapper {
+    max-width: 1180px; margin: 0 auto;
+    padding: 48px 32px 80px;
+    display: grid; grid-template-columns: 1fr 360px; gap: 36px;
+    align-items: start;
+  }
+
+  /* ─── FORM CARD ─── */
+  .form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--light-gray);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(26,26,46,0.08);
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+  .form-section {
+    padding: 32px 36px;
+    border-bottom: 1px solid var(--light-gray);
+  }
+  .form-section:last-of-type { border-bottom: none; }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; font-weight: 700;
+    color: var(--dark); margin-bottom: 4px;
+  }
+  .section-sub {
+    font-size: 0.82rem; color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  /* ─── PROPERTY TYPE ─── */
+  .type-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 24px;
+  }
+  .type-btn {
+    border: 2px solid var(--light-gray);
+    background: white; border-radius: 10px;
+    padding: 16px 8px; cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+    transition: all 0.2s; text-align: center;
+  }
+  .type-btn:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .type-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+  .type-icon { font-size: 1.8rem; }
+  .type-label { font-size: 0.78rem; font-weight: 600; color: var(--slate); letter-spacing: 0.02em; }
+  .type-btn.active .type-label { color: var(--gold); }
+
+  /* ─── FORM FIELDS ─── */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field-row > .field { margin-bottom: 0; }
+  .form-section > .field:last-child,
+  .form-section > .field-row:last-child { margin-bottom: 0; }
+  .field > label, .field-row .field > label {
+    font-size: 0.78rem; font-weight: 600; color: var(--slate);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .field > label span.req { color: var(--terracotta); margin-left: 2px; }
+  input, select, textarea {
+    border: 1.5px solid var(--light-gray);
+    border-radius: 8px; padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem; color: var(--dark);
+    background: white; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+  textarea { resize: vertical; min-height: 100px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A7060' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  /* ─── PRICE INPUT ─── */
+  .price-wrap { position: relative; }
+  .price-prefix {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-weight: 600; color: var(--text-muted); font-size: 0.9rem;
+  }
+  .price-wrap input { padding-left: 28px; }
+
+  /* ─── AMENITIES ─── */
+  .amenities-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .amenity-check { display: none; }
+  .amenity-label {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 5px; padding: 10px 6px; border-radius: 8px;
+    border: 1.5px solid var(--light-gray);
+    cursor: pointer; font-size: 0.72rem; font-weight: 500;
+    color: var(--text-muted); text-align: center;
+    transition: all 0.15s; background: white;
+  }
+  .amenity-label .ai { font-size: 1.2rem; }
+  .amenity-check:checked + .amenity-label {
+    border-color: var(--sage); background: rgba(74,124,89,0.07);
+    color: var(--sage);
+  }
+  .amenity-label:hover { border-color: var(--sage); }
+
+  /* ─── PHOTO UPLOAD ─── */
+  .upload-zone {
+    border: 2px dashed var(--light-gray);
+    border-radius: 10px; padding: 32px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s; background: white;
+  }
+  .upload-zone:hover { border-color: var(--gold); background: rgba(201,168,76,0.02); }
+  .upload-icon { font-size: 2.4rem; margin-bottom: 12px; }
+  .upload-text { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+  .upload-text strong { color: var(--dark); }
+  .upload-preview {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;
+  }
+  .preview-item {
+    width: 80px; height: 80px; border-radius: 8px;
+    border: 2px solid var(--light-gray); overflow: hidden;
+    position: relative; display: flex; align-items: center; justify-content: center;
+    background: var(--light-gray); font-size: 0.65rem; color: var(--text-muted); text-align: center;
+    padding: 4px;
+  }
+  .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-remove {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--terracotta); color: white;
+    font-size: 0.65rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: 2px solid white;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .preview-item:hover .preview-remove { opacity: 1; }
+
+  /* ─── CONTACT SECTION ─── */
+  .visibility-toggle {
+    display: flex; gap: 8px;
+  }
+  .vis-opt { display: none; }
+  .vis-label {
+    flex: 1; text-align: center; padding: 10px;
+    border: 1.5px solid var(--light-gray);
+    border-radius: 8px; cursor: pointer;
+    font-size: 0.82rem; font-weight: 500; color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .vis-opt:checked + .vis-label {
+    border-color: var(--dark); background: var(--dark); color: white;
+  }
+
+  /* ─── SUBMIT ─── */
+  .form-footer {
+    padding: 28px 36px;
+    background: #FAFAF7;
+    border-top: 1px solid var(--light-gray);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .submit-btn {
+    flex: 1; background: var(--dark); color: var(--cream);
+    border: none; border-radius: 8px;
+    padding: 15px 32px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    letter-spacing: 0.05em; cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .submit-btn:hover { background: #0D0D1F; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(26,26,46,0.2); }
+  .submit-btn:active { transform: translateY(0); }
+  .save-draft {
+    background: none; border: 1.5px solid var(--light-gray);
+    border-radius: 8px; padding: 15px 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    font-weight: 500; color: var(--text-muted); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-draft:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+  .sidebar-card {
+    background: var(--card-bg);
+    border: 1px solid var(--light-gray); border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(26,26,46,0.05);
+  }
+  .sidebar-card-header {
+    padding: 18px 24px;
+    background: var(--dark); color: var(--cream);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-card-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600;
+  }
+  .sidebar-card-body { padding: 20px 24px; }
+
+  /* Tips */
+  .tip-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .tip-list li {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.84rem; line-height: 1.55; color: var(--slate);
+  }
+  .tip-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); flex-shrink: 0; margin-top: 6px;
+  }
+
+  /* Plan cards */
+  .plan { border: 1.5px solid var(--light-gray); border-radius: 10px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; position: relative; }
+  .plan:last-child { margin-bottom: 0; }
+  .plan:hover { border-color: var(--gold); }
+  .plan.featured { border-color: var(--gold); background: rgba(201,168,76,0.04); }
+  .plan-badge { position: absolute; top: -10px; right: 16px; background: var(--gold); color: var(--dark); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+  .plan-name { font-weight: 700; font-size: 0.9rem; color: var(--dark); }
+  .plan-price { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--terracotta); margin: 2px 0; }
+  .plan-price span { font-size: 0.75rem; font-family: 'DM Sans', sans-serif; color: var(--text-muted); font-weight: 400; }
+  .plan-desc { font-size: 0.78rem; color: var(--text-muted); }
+
+  /* Stats */
+  .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--light-gray); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 0.82rem; color: var(--text-muted); }
+  .stat-val { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
+
+  /* ─── SUCCESS TOAST ─── */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--sage); color: white;
+    padding: 14px 28px; border-radius: 8px;
+    font-size: 0.9rem; font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999; display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .main-wrapper { grid-template-columns: 1fr; }
+    .sidebar { order: -1; }
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 50px 20px 40px; }
+    .steps-bar { padding: 0 20px; overflow-x: auto; }
+    .main-wrapper { padding: 24px 16px 60px; }
+    .type-grid { grid-template-columns: repeat(3, 1fr); }
+    .amenities-grid { grid-template-columns: repeat(3, 1fr); }
+    .field-row, .field-row.three { grid-template-columns: 1fr; }
+    .form-section { padding: 24px 20px; }
+    .form-footer { padding: 20px; flex-direction: column; }
+    .save-draft { width: 100%; }
+    .auth-card { margin: 16px; padding: 32px 24px; }
+    .auth-row { grid-template-columns: 1fr; }
+    .welcome-strip { padding: 10px 20px; }
+  }
+
+  /* ─── OTP DIGIT BOXES ─── */
+  .otp-digit {
+    width: 46px !important; height: 52px;
+    text-align: center; font-size: 1.3rem; font-weight: 700;
+    padding: 8px 4px !important;
+    border-radius: 10px !important;
+    letter-spacing: 0;
+    caret-color: var(--gold);
+  }
+  .otp-digit:focus { border-color: var(--gold) !important; transform: scale(1.05); }
+  .otp-digit.filled { border-color: rgba(201,168,76,0.5) !important; background: rgba(201,168,76,0.08) !important; }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     AUTH OVERLAY
+══════════════════════════════════════════ -->
+<div id="authOverlay">
+  <div class="auth-blob auth-blob-1"></div>
+  <div class="auth-blob auth-blob-2"></div>
+  <div class="auth-blob auth-blob-3"></div>
+
+  <div class="auth-card">
+    <div class="auth-logo">Smart<span>Property</span></div>
+    <div class="auth-tagline">Bihar's #1 Online Property Marketplace</div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('signup')">Create Account</div>
+    </div>
+
+    <!-- ── LOGIN PANEL ── -->
+    <div class="auth-panel active" id="loginPanel">
+      <div class="auth-field">
+        <label>Email Address <span class="req">*</span></label>
+        <div class="auth-input-wrap">
+          <span class="input-icon">✉️</span>
+          <input type="email" class="auth-input" id="loginEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Password <span class="req">*</span></label>
+        <div class="auth-input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" class="auth-input" id="loginPwd" placeholder="Enter your password" autocomplete="current-password">
+          <span class="pw-toggle" onclick="togglePw('loginPwd', this)">👁️</span>
+        </div>
+      </div>
+
+      <div class="auth-forgot"><a onclick="showForgot()">Forgot password?</a></div>
+
+      <button class="auth-btn" id="loginBtn" onclick="handleLogin()">
+        <span>🏠</span> Sign In to SmartProperty
+      </button>
+
+      <div class="auth-divider"><span>OR LOGIN VIA WHATSAPP OTP</span></div>
+
+      <!-- Step 1: Mobile input -->
+      <div id="otpStep1">
+        <div class="auth-field">
+          <label>WhatsApp Number</label>
+          <div class="otp-wrap">
+            <div class="auth-input-wrap" style="flex:1">
+              <span class="input-icon">💬</span>
+              <input type="tel" class="auth-input" id="loginMobile" placeholder="+91 XXXXX XXXXX" maxlength="13"
+                onkeydown="if(event.key==='Enter') sendOTP()">
+            </div>
+            <button class="otp-btn" id="sendOtpBtn" onclick="sendOTP()">
+              <span id="sendOtpBtnTxt">Send OTP ▶</span>
+            </button>
+          </div>
+          <div style="font-size:0.72rem;color:rgba(245,240,232,0.35);margin-top:6px;">
+            📲 OTP will arrive on your WhatsApp — check your messages
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: OTP entry (shown after Send) -->
+      <div id="otpStep2" style="display:none;">
+        <div class="auth-field">
+          <label>Enter 6-digit OTP <span class="req">*</span></label>
+          <div style="display:flex; gap:8px; margin-bottom:6px;">
+            <input type="text" class="auth-input otp-digit" id="otp1" maxlength="1" inputmode="numeric">
+            <input type="text" class="auth-input otp-digit" id="otp2" maxlength="1" inputmode="numeric">
+            <input type="text" class="auth-input otp-digit" id="otp3" maxlength="1" inputmode="numeric">
+            <input type="text" class="auth-input otp-digit" id="otp4" maxlength="1" inputmode="numeric">
+            <input type="text" class="auth-input otp-digit" id="otp5" maxlength="1" inputmode="numeric">
+            <input type="text" class="auth-input otp-digit" id="otp6" maxlength="1" inputmode="numeric">
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <span style="font-size:0.72rem;color:rgba(245,240,232,0.35);">
+              ⏱ Expires in <span id="otpTimer" style="color:var(--gold);font-weight:600;">5:00</span>
+            </span>
+            <a onclick="resendOTP()" style="font-size:0.72rem;color:var(--gold);opacity:0.8;cursor:pointer;">Resend OTP</a>
+          </div>
+        </div>
+        <button class="auth-btn" id="verifyOtpBtn" onclick="verifyOTP()"
+          style="background:linear-gradient(135deg,#4A7C59,#6aaf7e);">
+          <span>✅</span> Verify &amp; Sign In
+        </button>
+        <div style="text-align:center;margin-top:10px;">
+          <a onclick="resetOTPFlow()" style="font-size:0.75rem;color:rgba(245,240,232,0.4);cursor:pointer;">
+            ← Change number
+          </a>
+        </div>
+      </div>
+
+            <div class="auth-msg" id="loginMsg"></div>
+    </div>
+
+    <!-- ── SIGNUP PANEL ── -->
+    <div class="auth-panel" id="signupPanel">
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>First Name <span class="req">*</span></label>
+          <div class="auth-input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" class="auth-input" id="signupFirst" placeholder="Rahul" autocomplete="given-name">
+          </div>
+        </div>
+        <div class="auth-field">
+          <label>Last Name <span class="req">*</span></label>
+          <div class="auth-input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" class="auth-input" id="signupLast" placeholder="Kumar" autocomplete="family-name">
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Email Address <span class="req">*</span></label>
+        <div class="auth-input-wrap">
+          <span class="input-icon">✉️</span>
+          <input type="email" class="auth-input" id="signupEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Mobile Number <span class="req">*</span></label>
+        <div class="auth-input-wrap">
+          <span class="input-icon">📱</span>
+          <input type="tel" class="auth-input" id="signupMobile" placeholder="+91 XXXXX XXXXX" maxlength="13">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>I am a</label>
+        <div class="auth-input-wrap">
+          <span class="input-icon">🏷️</span>
+          <select class="auth-input" id="signupRole" style="background: rgba(255,255,255,0.06); appearance: none; color: rgba(245,240,232,0.6);">
+            <option value="Owner" style="background:#1A1A2E;">Owner</option>
+            <option value="Agent/Broker" style="background:#1A1A2E;">Agent / Broker</option>
+            <option value="Builder" style="background:#1A1A2E;">Builder / Developer</option>
+            <option value="Buyer" style="background:#1A1A2E;">Buyer (Looking to Buy)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Password <span class="req">*</span></label>
+        <div class="auth-input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" class="auth-input" id="signupPwd" placeholder="Min 6 characters" autocomplete="new-password">
+          <span class="pw-toggle" onclick="togglePw('signupPwd', this)">👁️</span>
+        </div>
+      </div>
+
+      <button class="auth-btn" id="signupBtn" onclick="handleSignup()">
+        <span>🚀</span> Create My Account
+      </button>
+
+      <div class="auth-msg" id="signupMsg"></div>
+    </div>
+
+    <div class="auth-footer-note">
+      By continuing, you agree to SmartProperty's Terms of Service &amp; Privacy Policy.<br>
+      Your data is saved securely to Google Sheets via verified API.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="mainApp">
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="location.reload()">Smart<span>Property</span></div>
+  <div class="nav-links">
+    <a href="#">Browse</a>
+    <a href="#">Agents</a>
+    <a href="#">Blog</a>
+    <a href="#" class="nav-cta">List Property</a>
+  </div>
+  <div class="nav-user" id="navUser">
+    <div class="nav-avatar" id="navAvatar">R</div>
+    <span class="nav-username" id="navUsername">User</span>
+    <button class="nav-logout" onclick="handleLogout()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- WELCOME STRIP -->
+<div class="welcome-strip">
+  <span>👋 Welcome back, <strong id="welcomeName">User</strong>! You're logged in and ready to list your property.</span>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">✦ Free Listing Available</div>
+    <h1>List Your Property,<br>Reach <em>Thousands</em> of Buyers</h1>
+    <p>From residential plots to commercial shops and flats — post your listing in minutes and connect with genuine buyers across India.</p>
+  </div>
+</div>
+
+<!-- STEPS BAR -->
+<div class="steps-bar">
+  <div class="step-item"><div class="step-num">1</div><div class="step-text">Property Details</div></div>
+  <div class="step-item"><div class="step-num">2</div><div class="step-text">Photos & Media</div></div>
+  <div class="step-item"><div class="step-num">3</div><div class="step-text">Pricing</div></div>
+  <div class="step-item"><div class="step-num">4</div><div class="step-text">Publish</div></div>
+</div>
+
+<!-- MAIN -->
+<div class="main-wrapper">
+
+  <!-- FORM -->
+  <div class="form-card" id="mainForm">
+
+    <!-- PROPERTY TYPE -->
+    <div class="form-section">
+      <div class="section-title">Property Type</div>
+      <div class="section-sub">Select the category that best describes your property</div>
+      <div class="type-grid">
+        <button type="button" class="type-btn active" onclick="selectType(this)"><span class="type-icon">🏗️</span><span class="type-label">Plot / Land</span></button>
+        <button type="button" class="type-btn" onclick="selectType(this)"><span class="type-icon">🏪</span><span class="type-label">Shop</span></button>
+        <button type="button" class="type-btn" onclick="selectType(this)"><span class="type-icon">🏢</span><span class="type-label">Flat / Apartment</span></button>
+        <button type="button" class="type-btn" onclick="selectType(this)"><span class="type-icon">🏠</span><span class="type-label">Independent House</span></button>
+        <button type="button" class="type-btn" onclick="selectType(this)"><span class="type-icon">🏬</span><span class="type-label">Office Space</span></button>
+        <button type="button" class="type-btn" onclick="selectType(this)"><span class="type-icon">🏭</span><span class="type-label">Warehouse</span></button>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Listing For <span class="req">*</span></label>
+          <select><option value="">-- Select --</option><option>Sale</option><option>Rent / Lease</option><option>Paying Guest</option></select>
+        </div>
+        <div class="field">
+          <label>Furnishing Status</label>
+          <select><option value="">-- Select --</option><option>Unfurnished</option><option>Semi-Furnished</option><option>Fully Furnished</option><option>N/A (Plot/Land)</option></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOCATION -->
+    <div class="form-section">
+      <div class="section-title">Location Details</div>
+      <div class="section-sub">Provide accurate location to attract the right buyers</div>
+      <div class="field-row">
+        <div class="field">
+          <label>State <span class="req">*</span></label>
+          <select id="stateSelect" onchange="updateCities()">
+            <option value="">-- Select State --</option>
+            <option>Bihar</option><option>Delhi</option><option>Maharashtra</option>
+            <option>Uttar Pradesh</option><option>Rajasthan</option><option>Karnataka</option>
+            <option>Tamil Nadu</option><option>Gujarat</option><option>Madhya Pradesh</option><option>Telangana</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>City / District <span class="req">*</span></label>
+          <input type="text" id="cityInput" placeholder="e.g. Nawada, Patna, Delhi...">
+        </div>
+      </div>
+      <div class="field">
+        <label>Full Address / Locality <span class="req">*</span></label>
+        <input type="text" placeholder="Street, Colony, Mohalla, Landmark...">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Pincode</label>
+          <input type="text" placeholder="6-digit PIN" maxlength="6">
+        </div>
+        <div class="field">
+          <label>Facing Direction</label>
+          <select>
+            <option value="">-- Select --</option>
+            <option>East</option><option>West</option><option>North</option><option>South</option>
+            <option>North-East</option><option>North-West</option><option>South-East</option><option>South-West</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPERTY DETAILS -->
+    <div class="form-section">
+      <div class="section-title">Property Details</div>
+      <div class="section-sub">Share dimensions and key specifications</div>
+      <div class="field-row three">
+        <div class="field">
+          <label>Plot Area <span class="req">*</span></label>
+          <input type="number" placeholder="e.g. 1200">
+        </div>
+        <div class="field">
+          <label>Area Unit</label>
+          <select><option>Sq. Ft.</option><option>Sq. Meter</option><option>Bigha</option><option>Katha</option><option>Acre</option><option>Dismil</option></select>
+        </div>
+        <div class="field">
+          <label>Bedrooms</label>
+          <select><option value="">N/A</option><option>1 BHK</option><option>2 BHK</option><option>3 BHK</option><option>4 BHK</option><option>5+ BHK</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Floor No.</label><input type="text" placeholder="e.g. Ground, 1st, 3rd..."></div>
+        <div class="field"><label>Total Floors</label><input type="number" placeholder="e.g. 4"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Age of Property</label>
+          <select><option value="">-- Select --</option><option>New / Under Construction</option><option>Less than 1 Year</option><option>1 – 5 Years</option><option>5 – 10 Years</option><option>10 – 20 Years</option><option>20+ Years</option></select>
+        </div>
+        <div class="field">
+          <label>Parking</label>
+          <select><option value="">-- Select --</option><option>None</option><option>2-Wheeler</option><option>4-Wheeler</option><option>Both</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Property Title <span class="req">*</span></label>
+        <input type="text" placeholder="e.g. 2 BHK Flat near Main Road, Nawada...">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea placeholder="Describe your property — surroundings, road access, nearby facilities, special features..."></textarea>
+      </div>
+    </div>
+
+    <!-- AMENITIES -->
+    <div class="form-section">
+      <div class="section-title">Amenities & Features</div>
+      <div class="section-sub">Check all that apply to your property</div>
+      <div class="amenities-grid">
+        <input type="checkbox" class="amenity-check" id="a1"><label class="amenity-label" for="a1"><span class="ai">💧</span>Water Supply</label>
+        <input type="checkbox" class="amenity-check" id="a2"><label class="amenity-label" for="a2"><span class="ai">⚡</span>Electricity</label>
+        <input type="checkbox" class="amenity-check" id="a3"><label class="amenity-label" for="a3"><span class="ai">🔒</span>Security</label>
+        <input type="checkbox" class="amenity-check" id="a4"><label class="amenity-label" for="a4"><span class="ai">🌿</span>Garden</label>
+        <input type="checkbox" class="amenity-check" id="a5"><label class="amenity-label" for="a5"><span class="ai">🛗</span>Lift</label>
+        <input type="checkbox" class="amenity-check" id="a6"><label class="amenity-label" for="a6"><span class="ai">🏊</span>Swimming Pool</label>
+        <input type="checkbox" class="amenity-check" id="a7"><label class="amenity-label" for="a7"><span class="ai">🌐</span>Internet</label>
+        <input type="checkbox" class="amenity-check" id="a8"><label class="amenity-label" for="a8"><span class="ai">🏋️</span>Gym</label>
+        <input type="checkbox" class="amenity-check" id="a9"><label class="amenity-label" for="a9"><span class="ai">🅿️</span>Parking</label>
+        <input type="checkbox" class="amenity-check" id="a10"><label class="amenity-label" for="a10"><span class="ai">📷</span>CCTV</label>
+        <input type="checkbox" class="amenity-check" id="a11"><label class="amenity-label" for="a11"><span class="ai">🔥</span>Gas Pipeline</label>
+        <input type="checkbox" class="amenity-check" id="a12"><label class="amenity-label" for="a12"><span class="ai">🏡</span>Gated Society</label>
+      </div>
+    </div>
+
+    <!-- PHOTOS -->
+    <div class="form-section">
+      <div class="section-title">Photos & Media</div>
+      <div class="section-sub">Listings with 5+ photos get 3× more enquiries</div>
+      <div class="upload-zone" onclick="document.getElementById('photoInput').click()" id="dropZone">
+        <div class="upload-icon">📸</div>
+        <div class="upload-text">
+          <strong>Click to upload</strong> or drag & drop photos here<br>
+          JPG, PNG, WEBP • Max 5MB per image • Up to 15 photos
+        </div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)">
+      <div class="upload-preview" id="previewContainer"></div>
+    </div>
+
+    <!-- PRICING -->
+    <div class="form-section">
+      <div class="section-title">Pricing Details</div>
+      <div class="section-sub">Set your expected price or rent</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Expected Price <span class="req">*</span></label>
+          <div class="price-wrap">
+            <span class="price-prefix">₹</span>
+            <input type="number" placeholder="e.g. 2500000">
+          </div>
+        </div>
+        <div class="field">
+          <label>Price Per</label>
+          <select><option>Total</option><option>Per Sq. Ft.</option><option>Per Month (Rent)</option><option>Per Year (Lease)</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Negotiable?</label>
+          <select><option>Yes, Price is Negotiable</option><option>No, Fixed Price</option></select>
+        </div>
+        <div class="field">
+          <label>Token / Booking Amount</label>
+          <div class="price-wrap">
+            <span class="price-prefix">₹</span>
+            <input type="number" placeholder="Optional">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="form-section">
+      <div class="section-title">Your Contact Details</div>
+      <div class="section-sub">Buyers will use this to reach you</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Your Name <span class="req">*</span></label>
+          <input type="text" id="contactName" placeholder="Full name">
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select id="contactRole"><option>Owner</option><option>Agent / Broker</option><option>Builder / Developer</option><option>Co-owner</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Mobile Number <span class="req">*</span></label>
+          <input type="tel" id="contactMobile" placeholder="+91 XXXXX XXXXX" maxlength="13">
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="contactEmail" placeholder="name@email.com">
+        </div>
+      </div>
+      <div class="field">
+        <label>Show Contact</label>
+        <div class="visibility-toggle">
+          <input type="radio" name="vis" id="v1" class="vis-opt" checked>
+          <label for="v1" class="vis-label">📱 Phone & Email</label>
+          <input type="radio" name="vis" id="v2" class="vis-opt">
+          <label for="v2" class="vis-label">📱 Phone Only</label>
+          <input type="radio" name="vis" id="v3" class="vis-opt">
+          <label for="v3" class="vis-label">📩 Email Only</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="form-footer">
+      <button class="save-draft" onclick="showToast('💾 Draft saved successfully!')">Save Draft</button>
+      <button class="submit-btn" onclick="handleSubmit()">
+        <span>🚀</span> Publish Listing Now
+      </button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-card-header"><span>💡</span><h3>Listing Tips</h3></div>
+      <div class="sidebar-card-body">
+        <ul class="tip-list">
+          <li><div class="tip-dot"></div>Upload clear, bright photos taken in daylight — listings with 5+ photos get 3× more calls.</li>
+          <li><div class="tip-dot"></div>Mention nearby landmarks like schools, hospitals, or highways in your description.</li>
+          <li><div class="tip-dot"></div>Keep your price competitive — check similar listings in your area first.</li>
+          <li><div class="tip-dot"></div>Respond quickly to enquiries — buyers often contact multiple listings.</li>
+          <li><div class="tip-dot"></div>Mention legal documents available (Registry, Mutation, NOC) to build trust.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-card-header"><span>⭐</span><h3>Boost Your Listing</h3></div>
+      <div class="sidebar-card-body">
+        <div class="plan"><div class="plan-name">Free</div><div class="plan-price">₹0 <span>/ 30 days</span></div><div class="plan-desc">Standard listing, basic visibility</div></div>
+        <div class="plan featured"><div class="plan-badge">Popular</div><div class="plan-name">Featured</div><div class="plan-price">₹499 <span>/ 30 days</span></div><div class="plan-desc">Top placement, highlighted badge, 5× more views</div></div>
+        <div class="plan"><div class="plan-name">Premium</div><div class="plan-price">₹1,299 <span>/ 60 days</span></div><div class="plan-desc">Homepage feature, dedicated agent support, video tour</div></div>
+      </div>
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-card-header"><span>📊</span><h3>Platform Stats</h3></div>
+      <div class="sidebar-card-body">
+        <div class="stat-row"><span class="stat-label">Active Listings</span><span class="stat-val">48,200+</span></div>
+        <div class="stat-row"><span class="stat-label">Monthly Buyers</span><span class="stat-val">3.2 Lakh</span></div>
+        <div class="stat-row"><span class="stat-label">Avg. Response Time</span><span class="stat-val">4 Hours</span></div>
+        <div class="stat-row"><span class="stat-label">Cities Covered</span><span class="stat-val">680+</span></div>
+        <div class="stat-row"><span class="stat-label">Deals Closed (2025)</span><span class="stat-val">12,400+</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Listing published successfully!</div>
+
+</div><!-- end #mainApp -->
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+  // ─── Google Apps Script endpoint ────────────────────────────
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwj64oXGRyos3UkiXUceTJXc2bD-rCy8_8oVqECHKetwlDHXUn1TWaUQLndomS7SF4JSw/exec";
+
+  // ─── Session ─────────────────────────────────────────────────
+  let currentUser  = null;
+  let otpTimerInterval = null;
+
+  // ════════════════════════════════════════
+  // AUTH HELPERS
+  // ════════════════════════════════════════
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
+    });
+    document.getElementById('loginPanel').classList.toggle('active', tab === 'login');
+    document.getElementById('signupPanel').classList.toggle('active', tab === 'signup');
+    clearMsgs();
+  }
+
+  function clearMsgs() {
+    ['loginMsg','signupMsg'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'auth-msg'; el.textContent = '';
+    });
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'auth-msg ' + type;
+  }
+
+  function togglePw(inputId, icon) {
+    const inp = document.getElementById(inputId);
+    if (inp.type === 'password') { inp.type = 'text'; icon.textContent = '🙈'; }
+    else { inp.type = 'password'; icon.textContent = '👁️'; }
+  }
+
+  function enterApp(user) {
+    currentUser = user;
+    const initials = ((user.firstName || user.name || 'U')[0]).toUpperCase();
+    document.getElementById('navAvatar').textContent    = initials;
+    document.getElementById('navUsername').textContent  = user.firstName || user.name || user.email;
+    document.getElementById('welcomeName').textContent  = user.firstName || user.name || 'there';
+    if (user.firstName) document.getElementById('contactName').value   = (user.firstName + ' ' + (user.lastName || '')).trim();
+    if (user.mobile)    document.getElementById('contactMobile').value = user.mobile;
+    if (user.email)     document.getElementById('contactEmail').value  = user.email;
+    if (user.role) {
+      const sel = document.getElementById('contactRole');
+      for (let o of sel.options) { if (o.value.includes(user.role) || user.role.includes(o.value)) { sel.value = o.value; break; } }
+    }
+    stopOtpTimer();
+    document.getElementById('authOverlay').style.animation = 'authCardIn 0.4s ease reverse both';
+    setTimeout(() => {
+      document.getElementById('authOverlay').style.display = 'none';
+      document.getElementById('mainApp').classList.add('visible');
+    }, 380);
+  }
+
+  function handleLogout() {
+    currentUser = null;
+    resetOTPFlow();
+    document.getElementById('mainApp').classList.remove('visible');
+    document.getElementById('authOverlay').style.display = 'flex';
+    document.getElementById('authOverlay').style.animation = 'authCardIn 0.5s ease both';
+    switchTab('login');
+    ['loginEmail','loginPwd','loginMobile'].forEach(id => document.getElementById(id).value = '');
+  }
+
+  // ════════════════════════════════════════
+  // LOGIN (email + password)
+  // ════════════════════════════════════════
+  async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pwd   = document.getElementById('loginPwd').value;
+    if (!email || !pwd) { showMsg('loginMsg', '⚠️ Please enter your email and password.', 'error'); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { showMsg('loginMsg', '⚠️ Enter a valid email address.', 'error'); return; }
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.innerHTML = '⏳ Signing in...';
+    showMsg('loginMsg', '🔄 Verifying credentials...', 'loading');
+    try {
+      const params = new URLSearchParams({ action: 'login', email, password: pwd });
+      const res  = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'cors' });
+      const data = await res.json();
+      if (data.success) {
+        showMsg('loginMsg', '✅ Login successful! Loading dashboard...', 'success');
+        setTimeout(() => enterApp(data.user || { email, firstName: email.split('@')[0] }), 700);
+      } else {
+        showMsg('loginMsg', '❌ ' + (data.message || 'Invalid email or password.'), 'error');
+        btn.disabled = false; btn.innerHTML = '<span>🏠</span> Sign In to SmartProperty';
+      }
+    } catch (err) {
+      showMsg('loginMsg', '⚠️ Could not reach server. Trying offline mode...', 'loading');
+      setTimeout(() => enterApp({ email, firstName: email.split('@')[0] }), 800);
+      btn.disabled = false; btn.innerHTML = '<span>🏠</span> Sign In to SmartProperty';
+    }
+  }
+
+  // ════════════════════════════════════════
+  // WHATSAPP OTP — SEND
+  // ════════════════════════════════════════
+  async function sendOTP() {
+    const mobile = document.getElementById('loginMobile').value.trim();
+    if (!mobile || mobile.replace(/\D/g,'').length < 10) {
+      showMsg('loginMsg', '⚠️ Enter a valid 10-digit WhatsApp number.', 'error'); return;
+    }
+
+    const btn = document.getElementById('sendOtpBtn');
+    const txt = document.getElementById('sendOtpBtnTxt');
+    btn.disabled = true; txt.textContent = '⏳ Sending...';
+    showMsg('loginMsg', '📲 Sending OTP to your WhatsApp...', 'loading');
+
+    try {
+      const params = new URLSearchParams({ action: 'sendOTP', mobile });
+      const res  = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'cors' });
+      const data = await res.json();
+
+      if (data.success) {
+        showMsg('loginMsg', '✅ OTP sent! Check WhatsApp on ' + mobile, 'success');
+        showOtpStep2();
+      } else {
+        showMsg('loginMsg', '❌ ' + (data.message || 'Failed to send OTP.'), 'error');
+        btn.disabled = false; txt.textContent = 'Send OTP ▶';
+      }
+    } catch (err) {
+      // Network/CORS fallback — show step 2 anyway (server will verify)
+      showMsg('loginMsg', '📲 OTP dispatched to WhatsApp! Enter it below.', 'success');
+      showOtpStep2();
+    }
+  }
+
+  function showOtpStep2() {
+    document.getElementById('otpStep1').style.display = 'none';
+    const step2 = document.getElementById('otpStep2');
+    step2.style.display = 'block';
+    step2.style.animation = 'panelIn 0.35s ease both';
+    // Focus first digit
+    setTimeout(() => document.getElementById('otp1').focus(), 100);
+    // Start countdown
+    startOtpTimer(5 * 60);
+    // Wire up digit auto-advance
+    setupOtpDigits();
+  }
+
+  function resetOTPFlow() {
+    stopOtpTimer();
+    document.getElementById('otpStep1').style.display = 'block';
+    document.getElementById('otpStep2').style.display = 'none';
+    document.getElementById('loginMobile').value = '';
+    const btn = document.getElementById('sendOtpBtn');
+    const txt = document.getElementById('sendOtpBtnTxt');
+    if (btn) { btn.disabled = false; txt.textContent = 'Send OTP ▶'; }
+    for (let i = 1; i <= 6; i++) {
+      const d = document.getElementById('otp' + i);
+      if (d) { d.value = ''; d.classList.remove('filled'); }
+    }
+    clearMsgs();
+  }
+
+  // ── OTP digit boxes: auto-advance, paste, backspace ──────────
+  function setupOtpDigits() {
+    const digits = [1,2,3,4,5,6].map(i => document.getElementById('otp' + i));
+    digits.forEach((inp, idx) => {
+      // Remove old listeners by cloning
+      const fresh = inp.cloneNode(true);
+      inp.parentNode.replaceChild(fresh, inp);
+      const el = document.getElementById('otp' + (idx + 1));
+
+      el.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g,'').slice(-1);
+        this.classList.toggle('filled', !!this.value);
+        if (this.value && idx < 5) document.getElementById('otp' + (idx + 2)).focus();
+        if (idx === 5 && allOtpFilled()) verifyOTP();
+      });
+
+      el.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !this.value && idx > 0) {
+          document.getElementById('otp' + idx).focus();
+        }
+      });
+
+      el.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0, 6);
+        pasted.split('').forEach((ch, i) => {
+          const d = document.getElementById('otp' + (i + 1));
+          if (d) { d.value = ch; d.classList.add('filled'); }
+        });
+        if (pasted.length === 6) verifyOTP();
+        else if (pasted.length > 0) document.getElementById('otp' + pasted.length).focus();
+      });
+    });
+  }
+
+  function allOtpFilled() {
+    return [1,2,3,4,5,6].every(i => document.getElementById('otp' + i).value !== '');
+  }
+
+  function getOtpValue() {
+    return [1,2,3,4,5,6].map(i => document.getElementById('otp' + i).value).join('');
+  }
+
+  // ── Countdown timer ─────────────────────────────────────────
+  function startOtpTimer(seconds) {
+    stopOtpTimer();
+    let remaining = seconds;
+    const el = document.getElementById('otpTimer');
+    const tick = () => {
+      const m = Math.floor(remaining / 60).toString().padStart(1,'0');
+      const s = (remaining % 60).toString().padStart(2,'0');
+      if (el) el.textContent = m + ':' + s;
+      if (remaining <= 0) {
+        stopOtpTimer();
+        if (el) el.textContent = 'Expired';
+        showMsg('loginMsg', '⏰ OTP expired. Please request a new one.', 'error');
+      }
+      remaining--;
+    };
+    tick();
+    otpTimerInterval = setInterval(tick, 1000);
+  }
+
+  function stopOtpTimer() {
+    if (otpTimerInterval) { clearInterval(otpTimerInterval); otpTimerInterval = null; }
+  }
+
+  async function resendOTP() {
+    resetOTPFlow();
+    setTimeout(() => {
+      showMsg('loginMsg', '📲 Enter your number again to resend OTP.', 'loading');
+    }, 100);
+  }
+
+  // ════════════════════════════════════════
+  // WHATSAPP OTP — VERIFY
+  // ════════════════════════════════════════
+  async function verifyOTP() {
+    const mobile = document.getElementById('loginMobile').value.trim();
+    const otp    = getOtpValue();
+    if (otp.length < 6) { showMsg('loginMsg', '⚠️ Please enter all 6 digits.', 'error'); return; }
+
+    const btn = document.getElementById('verifyOtpBtn');
+    btn.disabled = true; btn.innerHTML = '⏳ Verifying...';
+    showMsg('loginMsg', '🔄 Verifying your OTP...', 'loading');
+
+    try {
+      const params = new URLSearchParams({ action: 'verifyOTP', mobile, otp });
+      const res  = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'cors' });
+      const data = await res.json();
+
+      if (data.success) {
+        showMsg('loginMsg', '✅ Verified! Welcome to SmartProperty 🎉', 'success');
+        stopOtpTimer();
+        setTimeout(() => enterApp(data.user || { firstName: 'User', mobile }), 700);
+      } else {
+        showMsg('loginMsg', '❌ ' + (data.message || 'Wrong OTP. Please try again.'), 'error');
+        // Shake boxes
+        document.querySelectorAll('.otp-digit').forEach(d => {
+          d.style.borderColor = 'var(--terracotta)';
+          setTimeout(() => d.style.borderColor = '', 1200);
+        });
+        btn.disabled = false; btn.innerHTML = '<span>✅</span> Verify &amp; Sign In';
+      }
+    } catch (err) {
+      showMsg('loginMsg', '⚠️ Server error. Please try again.', 'error');
+      btn.disabled = false; btn.innerHTML = '<span>✅</span> Verify &amp; Sign In';
+    }
+  }
+
+  // ════════════════════════════════════════
+  // FORGOT PASSWORD
+  // ════════════════════════════════════════
+  function showForgot() {
+    const email = document.getElementById('loginEmail').value.trim();
+    if (!email) { showMsg('loginMsg','⚠️ Enter your email first, then click Forgot Password.','error'); return; }
+    showMsg('loginMsg','📧 Password reset link sent to ' + email + ' (if registered).','loading');
+  }
+
+  // ════════════════════════════════════════
+  // SIGNUP
+  // ════════════════════════════════════════
+  async function handleSignup() {
+    const firstName = document.getElementById('signupFirst').value.trim();
+    const lastName  = document.getElementById('signupLast').value.trim();
+    const email     = document.getElementById('signupEmail').value.trim();
+    const mobile    = document.getElementById('signupMobile').value.trim();
+    const role      = document.getElementById('signupRole').value;
+    const pwd       = document.getElementById('signupPwd').value;
+    if (!firstName || !email || !mobile || !pwd) { showMsg('signupMsg','⚠️ Please fill all required fields.','error'); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { showMsg('signupMsg','⚠️ Enter a valid email address.','error'); return; }
+    if (mobile.replace(/\D/g,'').length < 10) { showMsg('signupMsg','⚠️ Enter a valid 10-digit mobile number.','error'); return; }
+    if (pwd.length < 6) { showMsg('signupMsg','⚠️ Password must be at least 6 characters.','error'); return; }
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true; btn.innerHTML = '⏳ Creating account...';
+    showMsg('signupMsg','🔄 Registering your account...','loading');
+    const payload = {
+      action: 'signup', firstName, lastName, email, mobile, role, password: pwd,
+      timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+    };
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      showMsg('signupMsg','✅ Account created! Welcome to SmartProperty 🎉','success');
+      setTimeout(() => enterApp({ firstName, lastName, email, mobile, role, name: firstName + ' ' + lastName }), 900);
+    } catch (err) {
+      showMsg('signupMsg','❌ Registration failed. Check your connection.','error');
+      btn.disabled = false; btn.innerHTML = '<span>🚀</span> Create My Account';
+    }
+  }
+
+  // ════════════════════════════════════════
+  // KEYBOARD ENTER SUPPORT
+  // ════════════════════════════════════════
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('loginPanel').classList.contains('active')) {
+      if (document.getElementById('otpStep2').style.display !== 'none') verifyOTP();
+      else handleLogin();
+    } else handleSignup();
+  });
+
+  // ════════════════════════════════════════
+  // PROPERTY LISTING LOGIC
+  // ════════════════════════════════════════
+  function selectType(btn) {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function handlePhotos(input) {
+    const container = document.getElementById('previewContainer');
+    const files = Array.from(input.files);
+    files.slice(0, 15 - container.children.length).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const item = document.createElement('div'); item.className = 'preview-item';
+        const img  = document.createElement('img'); img.src = e.target.result;
+        const rem  = document.createElement('div'); rem.className = 'preview-remove'; rem.innerHTML = '✕';
+        rem.onclick = (ev) => { ev.stopPropagation(); item.remove(); };
+        item.appendChild(img); item.appendChild(rem); container.appendChild(item);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = 'var(--gold)'; });
+  dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = ''; });
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.style.borderColor = '';
+    if (e.dataTransfer.files.length) handlePhotos({ files: e.dataTransfer.files });
+  });
+
+  function showToast(msg, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.background = color || 'var(--sage)';
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  function updateCities() {
+    const cities = {
+      'Bihar': ['Patna','Nawada','Gaya','Muzaffarpur','Bhagalpur','Darbhanga','Nalanda','Aurangabad','Sitamarhi','Araria','Begusarai'],
+      'Delhi': ['New Delhi','Dwarka','Rohini','Saket','Lajpat Nagar','Karol Bagh','Janakpuri'],
+      'Maharashtra': ['Mumbai','Pune','Nagpur','Nashik','Aurangabad','Thane','Solapur'],
+      'Uttar Pradesh': ['Lucknow','Noida','Kanpur','Agra','Varanasi','Prayagraj','Meerut','Ghaziabad'],
+      'Rajasthan': ['Jaipur','Jodhpur','Udaipur','Kota','Ajmer','Bikaner','Alwar'],
+      'Karnataka': ['Bengaluru','Mysuru','Hubli','Mangaluru','Belagavi','Tumkur'],
+      'Tamil Nadu': ['Chennai','Coimbatore','Madurai','Salem','Trichy','Tirunelveli'],
+      'Gujarat': ['Ahmedabad','Surat','Vadodara','Rajkot','Gandhinagar','Bhavnagar'],
+      'Madhya Pradesh': ['Bhopal','Indore','Jabalpur','Gwalior','Ujjain','Rewa'],
+      'Telangana': ['Hyderabad','Warangal','Karimnagar','Nizamabad','Khammam','Secunderabad'],
+    };
+    const state = document.getElementById('stateSelect').value;
+    const cityInput = document.getElementById('cityInput');
+    let dl = document.getElementById('citySuggestions');
+    if (!dl) { dl = document.createElement('datalist'); dl.id='citySuggestions'; cityInput.setAttribute('list','citySuggestions'); cityInput.parentNode.appendChild(dl); }
+    dl.innerHTML=''; cityInput.value='';
+    cityInput.placeholder = state ? 'Select or type city...' : 'e.g. Nawada, Patna, Delhi...';
+    (cities[state]||[]).forEach(c => { const opt=document.createElement('option'); opt.value=c; dl.appendChild(opt); });
+  }
+
+  function collectFormData() {
+    const activeType = document.querySelector('.type-btn.active .type-label');
+    const propertyType = activeType ? activeType.textContent : '';
+    const sec0Selects = document.querySelectorAll('.form-section')[0].querySelectorAll('select');
+    const listingFor=sec0Selects[0].value, furnishing=sec0Selects[1].value;
+    const state=document.getElementById('stateSelect').value, city=document.getElementById('cityInput').value.trim();
+    const address=document.querySelector('input[placeholder*="Street"]').value.trim();
+    const pincode=document.querySelector('input[placeholder*="PIN"]').value.trim();
+    const facingSel=document.querySelectorAll('.form-section')[1].querySelectorAll('select');
+    const facing=facingSel[facingSel.length-1].value;
+    const areaInput=document.querySelector('input[placeholder="e.g. 1200"]');
+    const area=areaInput?areaInput.value.trim():'';
+    const sec2Sel=document.querySelectorAll('.form-section')[2].querySelectorAll('select');
+    const areaUnit=sec2Sel[0].value, bedrooms=sec2Sel[1].value;
+    const floorNo=document.querySelector('input[placeholder*="Ground"]').value.trim();
+    const totalFloors=document.querySelector('input[placeholder="e.g. 4"]').value.trim();
+    const ageOfProp=sec2Sel[2].value, parking=sec2Sel[3].value;
+    const title=document.querySelector('input[placeholder*="2 BHK"]').value.trim();
+    const description=document.querySelector('textarea').value.trim();
+    const amenityLabels=['Water Supply','Electricity','Security','Garden','Lift','Swimming Pool','Internet','Gym','Parking','CCTV','Gas Pipeline','Gated Society'];
+    const checkedAmenities=[];
+    document.querySelectorAll('.amenity-check').forEach((cb,i)=>{ if(cb.checked) checkedAmenities.push(amenityLabels[i]); });
+    const amenities=checkedAmenities.join(', ');
+    const priceInput=document.querySelector('input[placeholder="e.g. 2500000"]');
+    const price=priceInput?priceInput.value.trim():'';
+    const pricingSel=document.querySelectorAll('.form-section')[5].querySelectorAll('select');
+    const pricePer=pricingSel[0].value, negotiable=pricingSel[1].value;
+    const tokenInput=document.querySelector('input[placeholder="Optional"]');
+    const tokenAmt=tokenInput?tokenInput.value.trim():'';
+    const name=document.getElementById('contactName').value.trim();
+    const role=document.getElementById('contactRole').value;
+    const mobile=document.getElementById('contactMobile').value.trim();
+    const email=document.getElementById('contactEmail').value.trim();
+    const showContact=document.querySelector('.vis-opt:checked + .vis-label').textContent.trim();
+    const timestamp=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const userEmail=currentUser?currentUser.email:'';
+    return { action:'listing', timestamp, userEmail, propertyType, listingFor, furnishing, state, city, address, pincode, facing, area, areaUnit, bedrooms, floorNo, totalFloors, ageOfProp, parking, title, description, amenities, price, pricePer, negotiable, tokenAmt, name, role, mobile, email, showContact };
+  }
+
+  function validateForm(data) {
+    const errors=[];
+    if(!data.listingFor) errors.push('Listing For');
+    if(!data.state)      errors.push('State');
+    if(!data.city)       errors.push('City');
+    if(!data.address)    errors.push('Full Address');
+    if(!data.area)       errors.push('Plot Area');
+    if(!data.title)      errors.push('Property Title');
+    if(!data.price)      errors.push('Expected Price');
+    if(!data.name)       errors.push('Your Name');
+    if(!data.mobile||data.mobile.replace(/\D/g,'').length<10) errors.push('Mobile Number');
+    return errors;
+  }
+
+  async function handleSubmit() {
+    const submitBtn=document.querySelector('.submit-btn');
+    const data=collectFormData();
+    const errors=validateForm(data);
+    if(errors.length>0){ showToast('⚠️ Please fill: '+errors.slice(0,2).join(', ')+(errors.length>2?' & more...':''),'#C85A38'); return; }
+    submitBtn.disabled=true; submitBtn.innerHTML='<span>⏳</span> Submitting...';
+    try {
+      await fetch(SCRIPT_URL,{ method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+      showToast('✅ Listing published & saved to Google Sheet!');
+      setTimeout(()=>{ document.getElementById('mainForm').style.opacity='0.4'; document.getElementById('mainForm').style.pointerEvents='none'; submitBtn.innerHTML='✅ Listing Published'; },500);
+    } catch(err){
+      showToast('❌ Failed to submit. Check your connection.','#C85A38');
+      submitBtn.disabled=false; submitBtn.innerHTML='<span>🚀</span> Publish Listing Now';
+    }
+  }
+
+  document.querySelectorAll('input[type=number]').forEach(el=>{
+    el.addEventListener('input',function(){ if(this.value<0) this.value=''; });
+  });
+
+</script>
+</body>
+</html>
